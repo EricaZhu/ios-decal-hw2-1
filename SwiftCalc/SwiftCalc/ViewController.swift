@@ -21,8 +21,12 @@ class ViewController: UIViewController {
     
     // TODO: This looks like a good place to add some data structures.
     //       One data structure is initialized below for reference.
-    var someDataStructure: [String] = [""]
-    
+//    var someDataStructure: [String] = [""]
+    var nums : [String] = [""]
+    var ops : [String] = []
+    var ifDouble : Bool = false
+    var nextNum : Bool = false
+    var curr : String = "0"
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -52,20 +56,62 @@ class ViewController: UIViewController {
     // TODO: Ensure that resultLabel gets updated.
     //       Modify this one or create your own.
     func updateResultLabel(_ content: String) {
-        print("Update me like one of those PCs")
+//        print("Update me like one of those PCs")
+//        let offset2 = -(curr.characters.count - 1)
+        if (content.characters.count > 7) {
+            let index = content.index(curr.startIndex, offsetBy: 7)
+            resultLabel.text = content.substring(to: index)
+        } else {
+            resultLabel.text = content
+        }
     }
     
     
     // TODO: A calculate method with no parameters, scary!
     //       Modify this one or create your own.
     func calculate() -> String {
-        return "0"
+//        return "0"
+        let num1 = nums.popLast()
+        let num2 = nums.popLast()
+        let op = ops.popLast()
+        let inta : Int = NSString(string: num1!).integerValue
+        let intb : Int = NSString(string: num2!).integerValue
+        if (op == "/" && ifDouble == false) {
+            if intb % inta != 0 {
+                ifDouble = true
+            }
+        }
+        if (ifDouble) {
+            let x = calculate(a: num1!, b: num2!, operation: op!)
+            let res : String = String(x)
+            nums.append(res)
+            curr = res
+            return res
+        } else {
+            let x = intCalculate(a: inta, b: intb, operation: op!)
+            let res : String = String(x)
+            nums.append(res)
+            curr = res
+            return res
+        }
     }
     
     // TODO: A simple calculate method for integers.
     //       Modify this one or create your own.
     func intCalculate(a: Int, b:Int, operation: String) -> Int {
         print("Calculation requested for \(a) \(operation) \(b)")
+        if operation == "*" {
+            return a * b
+        }
+        if operation == "/" {
+            return b / a
+        }
+        if operation == "+" {
+            return a + b
+        }
+        if operation == "-" {
+            return b - a
+        }
         return 0
     }
     
@@ -73,6 +119,20 @@ class ViewController: UIViewController {
     //       Modify this one or create your own.
     func calculate(a: String, b:String, operation: String) -> Double {
         print("Calculation requested for \(a) \(operation) \(b)")
+        let doublea : Double = NSString(string: a).doubleValue
+        let doubleb : Double = NSString(string: b).doubleValue
+        if operation == "*" {
+            return doublea * doubleb
+        }
+        if operation == "/" {
+            return doubleb / doublea
+        }
+        if operation == "+" {
+            return doublea + doubleb
+        }
+        if operation == "-" {
+            return doubleb - doublea
+        }
         return 0.0
     }
     
@@ -81,16 +141,111 @@ class ViewController: UIViewController {
         guard Int(sender.content) != nil else { return }
         print("The number \(sender.content) was pressed")
         // Fill me in!
+        if (nextNum) {
+            nums.append(sender.content)
+            nextNum = false
+        } else {
+            if (nums[nums.count - 1] == "0") {
+                nums[nums.count-1] = sender.content
+            } else {
+                nums[nums.count-1]+=(sender.content)
+            }
+
+        }
+        curr = nums[nums.count-1]
+        updateResultLabel(nums[nums.count-1])
     }
     
     // REQUIRED: The responder to an operator button being pressed.
     func operatorPressed(_ sender: CustomButton) {
         // Fill me in!
+        print("The operator \(sender.content) was pressed")
+        print("Current number of operators on stack is \(ops.count)")
+
+        let others = ["C", "+/-", "%"]
+        let x = sender.content
+        
+        if (others.contains(x)) {
+            othersPressed(sender)
+        }
+        else if (sender.content == "=") {
+            var res = curr
+            while ops.count > 0 {
+                res = calculate()
+            }
+            updateResultLabel(res)
+        }
+        else if (ops.count == 0) {
+            ops.append(x)
+        }
+        else if (ops[ops.count-1] == "*" || ops[ops.count-1] == "/") {
+            let res = calculate()
+            nums.append(res)
+            updateResultLabel(res)
+            ops.append(x)
+        }
+        else {
+            let res = calculate()
+            curr = res
+            updateResultLabel(res)
+            ops.append(x)
+        }
+        nextNum = true
+    }
+    
+    func othersPressed(_ sender: CustomButton) {
+        if (sender.content == "C") {
+            nums = [""]
+            ops = []
+            ifDouble = false
+            nextNum = false
+            updateResultLabel("0")
+        } else if (sender.content == "+/-") {
+            let offset = -(curr.characters.count - 1)
+            let index1 = curr.index(curr.endIndex, offsetBy: offset)
+            let sub = curr.substring(to: index1)
+            if (sub != "-") {
+                curr = "-" + curr
+                nums[nums.count-1] = curr
+                updateResultLabel(curr)
+            } else {
+                let offset2 = -(curr.characters.count - 1)
+                let index2 = curr.index(curr.endIndex, offsetBy: offset2)
+                curr = curr.substring(from: index2)
+                nums[nums.count-1] = curr
+                updateResultLabel(curr)
+            }
+        }
     }
     
     // REQUIRED: The responder to a number or operator button being pressed.
     func buttonPressed(_ sender: CustomButton) {
        // Fill me in!
+        print("buttom \(sender.content) is pressed")
+        if (sender.content == ".") {
+            ifDouble = true
+            if (nextNum || nums.count == 1) {
+                nums.append("0.")
+            } else {
+                nums[nums.count-1]+=(".")
+            }
+            nextNum = false
+            curr = nums[nums.count-1]
+            updateResultLabel(nums[nums.count-1])
+        } else {
+            if (!nextNum) {
+                if (curr != "0") {
+                    nums[nums.count-1]+=("0")
+                    curr = nums[nums.count-1]
+                    updateResultLabel(nums[nums.count-1])
+                }
+            } else {
+                nums.append("0")
+                curr = nums[nums.count-1]
+                updateResultLabel(nums[nums.count-1])
+                nextNum = true
+            }
+        }
     }
     
     // IMPORTANT: Do NOT change any of the code below.
